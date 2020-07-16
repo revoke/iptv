@@ -1,0 +1,46 @@
+{block content}
+
+        <section class="resume-section" id="about">
+            <div class="resume-section-content">
+                <h1 class="mb-0">Testovací úkol</h1>
+
+                <p class="lead">
+                    Úkol obsahuje tři dílčí části:
+                </p>
+                
+                <ol>
+                    <li>Vypsat loginy uživatelů, kteří mají aktuálně dostupný kanál ČT4Sport (ČT SPORT).</li>
+                    <li>Vypsat uživatele, kteří aktuálně nemají aktivní žádné kanály (mohou mít aktivní službu HBOGO).</li>
+                    <li>Zobrazit ke všem uživatelům jak dlouho měli aktivní službu HBOGO.</li>
+                </ol>
+                
+                <p>
+                    Pro usnadnění kontroly zde vypisuji testovací zákazníky se všemi jejich službami.
+                </p>
+                
+                <h4 class="mt-5">Zákazníci a jejich služby</h4>
+                <ul n:inner-foreach="$users as $u">
+                    <li>
+                        <h5 title="{$u->login}">{$u->fullName}</h5>
+                        {ifset $services[$u->id]}
+                        <ul n:inner-foreach="$services[$u->id] as $s">
+                            <li>
+                                <span n:class="(!is_null($s['to']) && (int) $s['to']->getTimestamp() < time()) || (int) $s['from']->getTimestamp() > time() ? 'text-muted' : 'text-success'">
+                                    {$s['from']|date:'Y-m-d'} - {if $s['to']}{$s['to']|date:'Y-m-d'}{else}nestanoveno{/if}:
+                                </span> 
+                                
+                                <strong class="text-info" title="ID {$s['channelPackage']}, obsahuje {implode(', ',$bundles[$s['channelPackage']])}">
+                                    {$packages[$s['channelPackage']]}
+                                </strong>
+                                
+                                <em n:if="$channels[$s['channelPackage']]">({$channels[$s['channelPackage']]})</em>
+                            </li>
+                        </ul>
+                        {else}
+                            <p>Zákazník neobjednal žádné služby.</p>
+                        {/ifset}
+                    </li>
+                </ul>
+                
+            </div>
+        </section>

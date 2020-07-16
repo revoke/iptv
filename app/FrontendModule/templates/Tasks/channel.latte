@@ -1,0 +1,52 @@
+{define title}Task 1{/define}
+
+{block content}
+<section class="resume-section" id="experience">
+    <div class="resume-section-content">
+        <h2 class="mb-5">Uživatelé se službou {$channel}</h2>        
+
+        <ul class="nav nav-tabs mb-2" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="one-tab" data-toggle="tab" href="#one" role="tab" aria-controls="One" aria-selected="true">Výsledek</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="two-tab" data-toggle="tab" href="#two" role="tab" aria-controls="Two" aria-selected="false">Highlighted SQL</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="three-tab" data-toggle="tab" href="#three" role="tab" aria-controls="Three" aria-selected="false">Plain SQL</a>
+            </li>
+        </ul>        
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active p-3" id="one" role="tabpanel" aria-labelledby="one-tab">
+                <table class="table table-bordered table-sm">
+                    <thead>
+                        <tr>
+                            <th>Uživatel</th>
+                            <th>Obsaženo v <em>packages</em></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr n:foreach="$users as $u">
+                            <td>{$u->login}</td>
+                            <td>{$u->channelName}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                        
+                <p>* Přidáním parametru URL <code>channel=zkratka</code> můžete vyhledat podle jiného kanálu.</p>
+
+            </div>
+
+            <div class="tab-pane fade p-3" id="two" role="tabpanel" aria-labelledby="two-tab">
+                <code>{\Nette\Database\Helpers::dumpSql($query)|noescape}</code>  
+            </div>
+
+            <div class="tab-pane fade p-3" id="three" role="tabpanel" aria-labelledby="three-tab">
+                <pre>{$sql}</pre>           
+            </div>
+        </div>     
+
+    </div>
+</section>

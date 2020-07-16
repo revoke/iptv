@@ -1,0 +1,124 @@
+{define title}Tasks{/define}
+
+{block content}
+    <section class="resume-section" id="experience">
+        <div class="resume-section-content">
+            <h2 class="mb-5">Task</h2>
+            
+<pre>
+Do databáze MySQL/MariaDB importujte schéma ze souboru database_schema.sql,
+data ze souboru database_data.sql a nastudujte si popis schématu ze souboru
+database_description.txt.
+
+Zadání
+------
+Vytvořte jednoduchou webovou aplikaci v Nette verzi 2.4 nebo vyšší s napojením
+na db pomocí Nette Database, která se připojí k MySQL/MariaDB databázi
+a vypíše z ní:
+
+  1) loginy uživatelů, kteří mají aktuálně dostupný kanál ct4sport,
+
+  2) uživatele, kteří aktuálně nemají aktivní žádné kanály (mohou mít 
+     aktivní službu HBOGO),
+
+  3) ke všem uživatelům jak dlouho (počet dní) měli aktivní službu HBOGO -
+     z minulosti až do teď. Pro zjednodušení lze předpokládat, že se služby
+     obsahující HBOGO v čase nepřekrývají.
+
+
+Každý úkol by měl využívat právě jeden sql dotaz.
+
+Bude se hodnotit elegance a efektivita SQL dotazů, architektura aplikace
+(dle konvencí Nette) a vzhled aplikace (není potřeba si hrát na grafika,
+stačí použít Bootstrap nebo oblíbenou šablonu apod.). 
+
+Kromě samotného výpisu výsledků by měla aplikace také zobrazit vhodně
+naformátovaný příslušný zdrojový SQL dotaz.
+
+Součástí řešení by měl být i soubor README, ve kterém bude popsané jak
+projekt spustit (testovat se bude na Debian 9).
+
+</pre>
+         
+<h3>Databáze</h3>
+          
+<pre>    
+Users
+-----
+Uživatelé.
+Pro účely úlohy nás zajímají jen sloupce `id`, `login` a `fullName`.
+
+
+ChannelPackages
+---------------
+Balíčky kanálů.
+Sloupec `type` může nabývat hodnot:
+  'package' - udává, že balíček obsahuje jen kanály
+  'extern'  - balíček reprezentuje externí službu (danou 'shortname',
+              pro zjednodušení úkolu není blíže specifikována)
+  'bundle'  - slouží jen jako kontejner, který obsahuje jiné balíčky 
+              (tzn. všechny jejich služby a kanály)
+
+Sloupec `parent` může (ale nemusí) obsahovat odkaz na rodičovský balíček
+(jeho id). Takovýto rodičovský balíček musí být vždy typu 'bundle'.
+Rekurzivně tak lze u balíčků typu 'bundle' zjistit, které služby a kanály
+obsahují. Pro příklad je níže uvedena struktura balíčků tohoto úkolu:
+
+                  Premium
+                  (bundle)
+                 /   |    \
+                /    |     \
+               /     |      \
+              /      |       \
+             /       |        \
+         Základ   Sport     Komplet HBO
+       (package) (package)   (bundle)
+                              /   \
+                             /     \
+                           HBO    HBOGO 
+                       (package)  (extern)
+
+
+Uživatel tak může mít např. aktivní balíček Premium, díky čemuž má zpřístupněny
+kanály balíčků Základ, Sport a HBO a externí službu HBOGO.
+Poku by uživatel měl jen aktivní balíček Základ, bude mít přístupny jen kanály 
+tohoto balíčku.
+
+Hloubka stromu pro balíčky typu 'bundle' může být maximálně 3.
+
+
+Channels
+--------
+Televizní kanály (ČT1, HBO, apod.)
+
+
+ChannelPackageChannels
+----------------------
+M:N tabulka přiřazující kanály do balíčků.
+
+
+Services
+--------
+Služby uživatelů. Uživatel můze mít několik služeb.
+Služba má dobu platnosti danou dvěma daty ve sloupcích `from` a `to`. 
+Hodnota NULL u sloupce `to` znamená trvání na neurčito. Služba je aktivní, 
+pokud dnešní datum spadá do doby platnosti.
+Služba je aktivní včetně prvního a posledního dne platnosti.
+Sloupec `channelPackage` představuje ID balíčku kanálů.
+
+Uživatel má přístup k televiznímu kanálu, pokud má aktivní nějakou službu
+s televizním balíčkem obsahujícím tento televizní kanál; popř. je tento balíček typu
+bundle a daný televizní kanál obsahuje některý z obsažených balíčků (viz 
+ChannelPackages).
+
+Uživatel má aktivní danou externí službu pokud má aktivní balíček typu 'extern',
+který má nastavený atribut 'shortname' na název této služby.
+Analogicky pokud má aktivní balíček typu 'bundle', který obsahuje daný balíček 
+typu 'extern'.
+</pre>
+
+
+
+
+        </div>
+    </section>
