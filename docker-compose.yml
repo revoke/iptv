@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+  web:
+    hostname: ip.tv
+    restart: always
+    build:
+      context: .
+      dockerfile: .docker/web.dockerfile
+    image: iptv.local
+    ports:
+      - 8080:${HOST_HTTP_PORT}
+    volumes:
+      - .:/web
+    depends_on:
+      - db
+    links:
+      - db
+
+  db:
+    image: mariadb:10
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_USER}
+    ports:
+      - ${HOST_MYSQL_PORT}:3306
+    volumes:
+      - ./.db-data:/var/lib/mysql
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 80:8080
+    depends_on:
+      - db
