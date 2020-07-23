@@ -27,8 +27,8 @@ class Repository
     {
         $classPath = get_class($this);
         $className = Strings::after($classPath, '\\', -1);
-        $tableName = Strings::replace($className, '~(.{1})([A-Z])~', '$1_$2');
-        return Strings::lower($tableName);
+        $tableName = Strings::replace($className, '~(.{1})([A-Z])~', '$1$2');
+        return $tableName;
     }
     
     /**
@@ -36,7 +36,24 @@ class Repository
      */
     public function table() : \Nette\Database\Table\Selection
     {
-        return $this->database->table($this->table);
+        try
+        {
+            return $this->database->table($this->table);
+        }
+        catch (\Nette\InvalidArgumentException $exception)
+        {
+            die($exception->getMessage());
+        }
+        catch (\Nette\Database\DriverException $exception)
+        {
+            die($exception->getMessage());
+            # toto je jednoduchy import dat
+            if (Strings::Match($exception->getMessage(), "~^Table '[\w]+' does not exist.$~"))
+            {
+                $this->database->query(file_get_contents(APP_DIR . '/../data/database_schema.sql'));
+                $this->database->query(file_get_contents(APP_DIR . '/../data/database_data.sql'));
+            }
+        }
     }
     
     

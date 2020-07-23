@@ -1,6 +1,6 @@
 parameters:
 	database:
-		server: localhost
+		server: db
 		database: iptv
 		username: root
 		password: bl4ckHaUs3
@@ -33,5 +33,5 @@ services:
 	- App\FrontendModule\Repository\Users
 	- App\FrontendModule\Repository\Services
 	- App\FrontendModule\Repository\Channels
-	- App\FrontendModule\Repository\Channelpackages
-	- App\FrontendModule\Repository\Channelpackagechannels
+	- App\FrontendModule\Repository\ChannelPackages
+	- App\FrontendModule\Repository\ChannelPackageChannels

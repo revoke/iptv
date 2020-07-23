@@ -8,24 +8,24 @@ class TasksPresenter extends BasePresenter
     public function renderChannel($channel = 'ct4sport')
     {
         $sql = "
-     SELECT users.login, GROUP_CONCAT(channelPackages.name SEPARATOR ', ') AS channelName
-       FROM users
- INNER JOIN services ON services.user = users.id
- INNER JOIN channelpackages ON channelpackages.id IN (
+     SELECT Users.login, GROUP_CONCAT(ChannelPackages.name SEPARATOR ', ') AS channelName
+       FROM Users
+ INNER JOIN Services ON Services.user = Users.id
+ INNER JOIN ChannelPackages ON ChannelPackages.id IN (
                                   SELECT IF (d1.type = 'package', d1.id, IF (d2.type = 'package', d2.id, d3.id)) AS package_id
-                                    FROM channelpackages d1
-                               LEFT JOIN channelpackages d2 ON d1.id = d2.parent AND d2.type <> 'extern'
-                               LEFT JOIN channelpackages d3 ON d2.id = d3.parent AND d3.type <> 'extern'
+                                    FROM ChannelPackages d1
+                               LEFT JOIN ChannelPackages d2 ON d1.id = d2.parent AND d2.type <> 'extern'
+                               LEFT JOIN ChannelPackages d3 ON d2.id = d3.parent AND d3.type <> 'extern'
                                    WHERE d1.type <> 'extern'
-                                     AND d1.id = services.channelPackage
+                                     AND d1.id = Services.channelPackage
                                     )
- INNER JOIN channelpackagechannels ON channelpackages.id = channelpackagechannels.package
- INNER JOIN channels ON channelpackagechannels.channel = channels.id AND channels.id = ?
-      WHERE services.active = 1
-        AND CURRENT_DATE() BETWEEN services.from AND IFNULL(services.to, CURRENT_DATE())
-        AND channelpackages.active = 1
-        AND channels.active = 1 
-   GROUP BY users.id";
+ INNER JOIN ChannelPackageChannels ON ChannelPackages.id = ChannelPackageChannels.package
+ INNER JOIN Channels ON ChannelPackageChannels.channel = Channels.id AND Channels.id = ?
+      WHERE Services.active = 1
+        AND CURRENT_DATE() BETWEEN Services.from AND IFNULL(Services.to, CURRENT_DATE())
+        AND ChannelPackages.active = 1
+        AND Channels.active = 1 
+   GROUP BY Users.id";
         
         $users = $this->database->query($sql, $channel);
                                 
@@ -40,34 +40,34 @@ class TasksPresenter extends BasePresenter
     public function renderNoChannel()
     {
         $sql = "
-SELECT users.id, users.login
-  FROM users
+SELECT Users.id, Users.login
+  FROM Users
  WHERE NOT EXISTS (SELECT *
-                     FROM services
-                LEFT JOIN channelpackages
+                     FROM Services
+                LEFT JOIN ChannelPackages
                        /* se sluzbou je spjat balicek, pricemz nas zajimaji jen balicky s kanaly (type=package) */ 
-                       ON channelpackages.id IN (
+                       ON ChannelPackages.id IN (
                                                   SELECT IF (d1.type = 'package', d1.id, IF (d2.type = 'package', d2.id, d3.id)) AS package_id
-                                                    FROM channelpackages d1
-                                               LEFT JOIN channelpackages d2 ON d1.id = d2.parent AND d2.type <> 'extern'
-                                               LEFT JOIN channelpackages d3 ON d2.id = d3.parent AND d3.type <> 'extern'
+                                                    FROM ChannelPackages d1
+                                               LEFT JOIN ChannelPackages d2 ON d1.id = d2.parent AND d2.type <> 'extern'
+                                               LEFT JOIN ChannelPackages d3 ON d2.id = d3.parent AND d3.type <> 'extern'
                                                    WHERE d1.type <> 'extern'
-                                                     AND d1.id = services.channelPackage
+                                                     AND d1.id = Services.channelPackage
                                                   )
 
                      /* u nalezenych balicku kanalu zkontroluji stav */
-                     LEFT JOIN channelpackagechannels 
-                       ON channelpackages.id = channelpackagechannels.package 
-                      AND channelpackages.active = 1
+                     LEFT JOIN ChannelPackageChannels 
+                       ON ChannelPackages.id = ChannelPackageChannels.package 
+                      AND ChannelPackages.active = 1
 
                      /* i samotne kanaly musi byt aktivni */
-                     LEFT JOIN channels 
-                       ON channelpackagechannels.channel = channels.id 
-                      AND channels.active = 1
+                     LEFT JOIN Channels 
+                       ON ChannelPackageChannels.channel = Channels.id 
+                      AND Channels.active = 1
 
-                     WHERE services.active = 1
-                       AND CURRENT_DATE() BETWEEN services.from AND IFNULL(services.to, CURRENT_DATE())
-                       AND users.id = services.user
+                     WHERE Services.active = 1
+                       AND CURRENT_DATE() BETWEEN Services.from AND IFNULL(Services.to, CURRENT_DATE())
+                       AND Users.id = Services.user
                  )";
         
         $users = $this->database->query($sql);
@@ -81,37 +81,37 @@ SELECT users.id, users.login
     public function renderHbogo($channel = 'hbogo')
     {
         $sql = "
-     SELECT users.login,
-            /* součet intervalů ze všech služeb, které měl uživatel kdy objednán a které zároveň jsou/obsahují sledovanou službu */  
-            SUM(
-                /* null hodnota _services.from znamená nenaleznou službu, tedy počet dnů = 0 */
-                /* ignorujeme také služby, jejichž odběr ještě nebyl zahájen */
-                IF(_services.from IS NULL OR _services.from > CURRENT_DATE(), 0, 
-                      /* pokud je 'to' null, služba je odebírána = použijeme dnešní den */
-                      /* pokud je 'to' nastaveno, zajímá nás buď datum ukončení v minulosti nebo použijeme dnešní den */
-                      DATEDIFF(IF(_services.to IS NULL, CURRENT_DATE(), LEAST(_services.to, CURRENT_DATE())), _services.from) + 1
-                  )
-               ) AS diff,
-            /* pro kontroluju vypisuji i seznam balíčků, které obsahují sledovanou službu */   
-            GROUP_CONCAT(DISTINCT _services.name ORDER BY _services.name SEPARATOR ', ')  AS channelName
+    SELECT Users.login, COUNT(DISTINCT calendar.date) AS diff,
+           GROUP_CONCAT(DISTINCT _services.name ORDER BY _services.name SEPARATOR ', ')  AS channelName
+    
+      FROM Users
 
-       FROM users 
-
-  LEFT JOIN (SELECT services.user, services.from, services.to, channelPackages.name 
-               FROM services
-         INNER JOIN channelpackages 
+ LEFT JOIN ( SELECT Services.user, Services.from, Services.to, ChannelPackages.name 
+               FROM Services
+         INNER JOIN ChannelPackages 
                   /* zde potřebuji najít všechny balíčky, které obsahují sledovanou službu nebo je to služba samotná */
-                 ON channelpackages.id IN (SELECT d1.id
-                                             FROM channelpackages d1
-                                        LEFT JOIN channelpackages d2 ON d1.id = d2.parent
-                                        LEFT JOIN channelpackages d3 ON d2.id = d3.parent
+                 ON ChannelPackages.id IN (SELECT d1.id
+                                             FROM ChannelPackages d1
+                                        LEFT JOIN ChannelPackages d2 ON d1.id = d2.parent
+                                        LEFT JOIN ChannelPackages d3 ON d2.id = d3.parent
                                             WHERE ? IN (d1.shortname, d2.shortname, d3.shortname)
-                                              AND d1.id = services.channelPackage
+                                              AND d1.id = Services.channelPackage
                                           )
              ) _services
-         ON _services.user = users.id 
+         ON _services.user = Users.id
 
-   GROUP BY users.id";
+LEFT JOIN ( WITH RECURSIVE Services AS (
+                 SELECT '2015-01-01' AS date
+                 UNION
+                 SELECT DATE_ADD(date, INTERVAL 1 DAY)
+                 FROM Services
+                 WHERE DATE_ADD(date, INTERVAL 1 DAY) <= CURRENT_DATE
+            )
+            select * FROM Services
+        ) calendar
+        ON calendar.date BETWEEN _services.from AND IFNULL(_services.to, CURRENT_DATE())
+    
+GROUP BY Users.id";
         
         $users = $this->database->query($sql, $channel);
                                 

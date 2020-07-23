@@ -2,7 +2,7 @@
 
 namespace App\FrontendModule\Repository;
 
-class Channelpackagechannels extends \App\Repository
+class Users extends \App\Repository
 {
     
 }
